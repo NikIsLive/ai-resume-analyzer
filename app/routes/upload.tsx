@@ -4,7 +4,7 @@ import FileUploader from "~/components/FileUploader";
 import {useNavigate} from "react-router";
 import {generateUUID} from "~/lib/utils";
 import {prepareInstructions} from "../../constants";
-import { usePuterStore } from '~/lib/Puter';
+import { usePuterStore } from '~/lib/puter';
 import { convertPdfToImage } from '~/lib/pdf2image';
 
 const Upload = () => {
