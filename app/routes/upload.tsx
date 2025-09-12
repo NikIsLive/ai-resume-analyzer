@@ -46,21 +46,42 @@ const Upload = () => {
 
         setStatusText('Analyzing...');
 
-        const feedback = await ai.feedback(
-            uploadedFile.path,
-            prepareInstructions({ jobTitle, jobDescription })
-        )
-        if (!feedback) return setStatusText('Error: Failed to analyze resume');
+try {
+  // ✅ Make sure user is signed in before calling AI
+  const signedIn = await window.puter.auth.isSignedIn();
+  if (!signedIn) {
+    console.log("⚠️ Not signed in, opening Puter sign-in...");
+    await window.puter.auth.signIn();
+  }
 
-        const feedbackText = typeof feedback.message.content === 'string'
-            ? feedback.message.content
-            : feedback.message.content[0].text;
+  const feedback = await ai.feedback(
+    uploadedFile.path,
+    prepareInstructions({ jobTitle, jobDescription })
+  );
 
-        data.feedback = JSON.parse(feedbackText);
-        await kv.set(`resume:${uuid}`, JSON.stringify(data));
-        setStatusText('Analysis complete, redirecting...');
-        console.log(data);
-        navigate(`/resume/${uuid}`);
+  if (!feedback) {
+    setStatusText("Error: Failed to analyze resume");
+    console.error("❌ Feedback returned undefined (likely AI error)");
+    return;
+  }
+
+  const feedbackText =
+    typeof feedback.message?.content === "string"
+      ? feedback.message.content
+      : feedback.message?.content?.[0]?.text;
+
+  data.feedback = JSON.parse(feedbackText);
+  await kv.set(`resume:${uuid}`, JSON.stringify(data));
+  setStatusText("Analysis complete, redirecting...");
+  console.log("✅ Parsed Feedback:", data);
+
+  navigate(`/resume/${uuid}`);
+} catch (err: any) {
+  console.error("❌ Full AI error:", err);
+  setStatusText("Error: " + (err.message || JSON.stringify(err)));
+}
+
+
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
